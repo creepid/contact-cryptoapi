@@ -22,6 +22,17 @@ TestCase("xmlTest",{
         xml.addAttribute("newElement", "attrName", "attrValue");
         xml.addAttribute(null, "attrName", "attrValue");
         assertEquals('<sample><newElement attrName="attrValue"/></sample>', xml.printXML());
+    },
+    "test root element name": function() {
+        var doc = XML.parse('<sample attrName="attrValue"><newElement/></sample>'),
+            name = XML.getRootElementName(doc);
+
+        assertEquals('sample', name);
+    },
+    "test root element attribute value": function() {
+        var doc = XML.parse('<sample attrName="attrValue"><newElement/></sample>'),
+            attr = XML.getRootElementAttrValue(doc, "attrName");
+        assertEquals('attrValue', attr);
     }
 });
 

@@ -4,7 +4,7 @@
 var Contact = Contact || {};
 Contact.Crypto = {};
 Contact.Crypto.Protocol = {
-    getBytes: function (str) {
+    _getBytes: function (str) {
         var bytes = [];
         if (!str) {
             return bytes;
@@ -14,7 +14,7 @@ Contact.Crypto.Protocol = {
         }
         return bytes;
     },
-    arrayBufferToBase64: function (buffer) {
+    _arrayBufferToBase64: function (buffer) {
         var binary = '';
         var bytes = new Uint8Array(buffer);
         var len = bytes.byteLength;
@@ -25,8 +25,16 @@ Contact.Crypto.Protocol = {
     }
 };
 
-patterns = {
+Contact.Crypto.Protocol.patterns = {
     dateFormat: "yyyy-mm-dd'T'HH:M:ss'Z'"
+}
+
+Contact.Crypto.Protocol.responseType = {
+    ERROR: ['errorReport', -1],
+    UNKNOWN: ['unknown', 0],
+    ENUM: ['privateKeysEnumeration', 1],
+    SIGN: ['sign', 2],
+    VERIFY: ['verify', 3]
 }
 
 Contact.Crypto.Protocol.prepareRequestEnum = function (keyUsage, restriction, returnType) {
@@ -39,23 +47,58 @@ Contact.Crypto.Protocol.prepareRequestEnum = function (keyUsage, restriction, re
     }
 
     var rawXml = xml.printXML();
-    return this.getBytes(rawXml);
+    return this._getBytes(rawXml);
 }
 
 Contact.Crypto.Protocol.prepareRequestSignBytes = function (idCertificate, password, date, bytes) {
     var xml = new XML('OperationRequest', null);
+
     with (xml) {
         addAttribute('OperationRequest', 'Type', 'sign');
         addElement('CertificateId', 'OperationRequest', idCertificate);
         addElement('Password', 'OperationRequest', password);
-        addElement('SigningTime', 'OperationRequest', date.format(patterns.dateFormat));
-        addElement('Content', 'OperationRequest', this.arrayBufferToBase64(bytes));
+        addElement('SigningTime', 'OperationRequest', date.format(this.patterns.dateFormat));
+        addElement('Content', 'OperationRequest', this._arrayBufferToBase64(bytes));
         addElement('ReturnCertType', 'OperationRequest', 'xml');
     }
 
     var rawXml = xml.printXML();
-    return this.getBytes(rawXml);
+    return this._getBytes(rawXml);
 }
+
+Contact.Crypto.Protocol.prepareRequestVerifyBytes = function (bytes, signature) {
+    var xml = new XML('OperationRequest', null);
+    with (xml) {
+        addAttribute('OperationRequest', 'Type', 'verify');
+        addElement('Content', 'OperationRequest',  this._arrayBufferToBase64(bytes));
+        addElement('Signature', 'OperationRequest', signature);
+        addElement('ReturnCertType', 'OperationRequest', 'xml');
+    }
+
+    var rawXml = xml.printXML();
+    return this._getBytes(rawXml);
+}
+
+Contact.Crypto.Protocol.getResponseType = function (doc) {
+   var _responseType = Contact.Crypto.Protocol.responseType,
+       type = _responseType.UNKNOWN;
+
+   if (XML.getRootElementName(doc) == 'OperationResponse'){
+       var typeAttr = XML.getRootElementAttrValue(doc, 'Type');
+
+       if (typeAttr){
+           for(var currType in _responseType){
+               if (_responseType[currType][0] == typeAttr){
+                   return _responseType[currType][1];
+               }
+           }
+       }
+   }
+
+   return type[1];
+}
+
+
 
 
 

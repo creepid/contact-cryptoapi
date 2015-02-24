@@ -86,3 +86,48 @@ XML.prototype.printXML = function () {
         return "";
     }
 }
+
+XML.parse = function(text){
+    if (typeof DOMParser != "undefined"){
+        //Mozilla, Firefox and simular
+        return (new DOMParser()).parseFromString(text, "application/xml");
+    }
+    else if(typeof ActiveXObject != "undefined"){
+        var _doc = new XML(text).doc;
+        _doc.loadXML(text);
+
+        return _doc;
+    }else{
+        //try to load document from URL-address of 'data' spec
+        //working in Safari with it's Sarissa lib
+        var url = "data:text/xml;charset=utf-8," + encodeURIComponent(text);
+
+        var request = new XMLHttpRequest();
+        request.open("GET", url, false);
+        request.send(null);
+
+        return request.responseXML;
+    }
+
+    return null;
+}
+
+XML.getRootElementName = function(doc){
+    if  (!doc || !doc.documentElement){
+        return "";
+    }
+
+    return doc.documentElement.tagName;
+}
+
+XML.getRootElementAttrValue = function(doc, attrName){
+    if  (!doc || !doc.documentElement){
+        return "";
+    }
+
+    if (!doc.documentElement.hasAttribute(attrName)){
+        return "";
+    }
+
+    return doc.documentElement.getAttribute(attrName);
+}

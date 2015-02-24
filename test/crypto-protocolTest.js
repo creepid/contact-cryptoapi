@@ -15,5 +15,12 @@ TestCase("crypto-protocolTest",{
         );
         var strResult = String.fromCharCode.apply(String, result);
         assertEquals('<OperationRequest Type="sign"><CertificateId>111111111111111111111</CertificateId><Password>password123</Password><SigningTime>2014-12-30T14:30:59Z</SigningTime><Content>eG4iIjc4OFg=</Content><ReturnCertType>xml</ReturnCertType></OperationRequest>', strResult);
+    },
+    "test getResponseType": function() {
+        var response = '<OperationResponse Type="sign"><element/></OperationResponse>',
+            doc = XML.parse(response);
+
+        var code = Contact.Crypto.Protocol.getResponseType(doc);
+        assertEquals(2, code);
     }
 });
